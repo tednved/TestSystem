@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.testsystem.mapper.UserMapper">
+
+    <!-- resultMap（可以不写，直接用 resultType=User，
+         但这里展示一版标准写法，方便你看清字段对应关系） -->
+    <resultMap id="UserResultMap" type="com.testsystem.entity.User">
+        <id     column="id"            property="id" />
+        <result column="username"      property="username" />
+        <result column="password"      property="password" />
+        <result column="role"          property="role" />
+        <result column="real_name"     property="realName" />
+        <result column="id_card"       property="idCard" />
+        <result column="gender"        property="gender" />
+        <result column="date_of_birth" property="dateOfBirth" />
+        <result column="university"    property="university" />
+        <result column="grade"         property="grade" />
+        <result column="created_at"    property="createdAt" />
+        <result column="updated_at"    property="updatedAt" />
+    </resultMap>
+
+    <!-- 登录用：根据用户名查询 -->
+    <select id="findByUsername" resultMap="UserResultMap">
+        SELECT
+            id,
+            username,
+            password,
+            role,
+            real_name,
+            id_card,
+            gender,
+            date_of_birth,
+            university,
+            grade,
+            created_at,
+            updated_at
+        FROM `user`
+        WHERE username = #{username}
+    </select>
+
+    <!-- 注册用：插入用户 -->
+    <insert id="insert" parameterType="com.testsystem.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `user` (
+            username,
+            password,
+            role,
+            real_name,
+            id_card,
+            gender,
+            date_of_birth,
+            university,
+            grade
+        ) VALUES (
+                     #{username},
+                     #{password},
+                     #{role},
+                     #{realName},
+                     #{idCard},
+                     #{gender},
+                     #{dateOfBirth},
+                     #{university},
+                     #{grade}
+                 )
+    </insert>
+    <!-- 分页查询所有用户 -->
+    <select id="findPage" resultMap="UserResultMap">
+        SELECT
+            id,
+            username,
+            password,
+            role,
+            real_name,
+            id_card,
+            gender,
+            date_of_birth,
+            university,
+            grade,
+            created_at,
+            updated_at
+        FROM `user`
+        ORDER BY id
+            LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询用户总数 -->
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*) FROM `user`
+    </select>
+
+    <!-- 根据 id 删除用户 -->
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM `user` WHERE id = #{id}
+    </delete>
+</mapper>
