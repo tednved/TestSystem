@@ -34,4 +34,6 @@ public interface UserMapper {
      * 根据 id 删除用户
      */
     int deleteById(Long id);
+
+    User findById(@Param("id") Long id);
 }

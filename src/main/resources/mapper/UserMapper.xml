@@ -94,4 +94,10 @@
     <delete id="deleteById" parameterType="long">
         DELETE FROM `user` WHERE id = #{id}
     </delete>
+    <select id="findById" resultMap="UserResultMap">
+        SELECT *
+        FROM `user`
+        WHERE id = #{id}
+            LIMIT 1
+    </select>
 </mapper>

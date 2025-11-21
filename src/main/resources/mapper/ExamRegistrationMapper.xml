@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.testsystem.mapper.ExamRegistrationMapper">
+
+    <resultMap id="ExamRegistrationResultMap" type="com.testsystem.entity.ExamRegistration">
+        <id     column="id"             property="id"/>
+        <result column="exam_id"        property="examId"/>
+        <result column="user_id"        property="userId"/>
+        <result column="status"         property="status"/>
+        <result column="registered_at"  property="registeredAt"/>
+    </resultMap>
+
+    <select id="findByExamIdAndUserId" resultMap="ExamRegistrationResultMap">
+        SELECT id, exam_id, user_id, status, registered_at
+        FROM exam_registration
+        WHERE exam_id = #{examId}
+          AND user_id = #{userId}
+            LIMIT 1
+    </select>
+
+    <select id="findByUserId" resultMap="ExamRegistrationResultMap">
+        SELECT id, exam_id, user_id, status, registered_at
+        FROM exam_registration
+        WHERE user_id = #{userId}
+          AND status = 'applied'
+    </select>
+
+    <insert id="insert" parameterType="com.testsystem.entity.ExamRegistration">
+        INSERT INTO exam_registration (exam_id, user_id, status, registered_at)
+        VALUES (#{examId}, #{userId}, #{status}, #{registeredAt})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE exam_registration
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

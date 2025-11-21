@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.testsystem.mapper.ExamMapper">
+
+    <!-- Exam 实体映射 -->
+    <resultMap id="ExamResultMap" type="com.testsystem.entity.Exam">
+        <id     column="id"                property="id"/>
+        <result column="title"             property="title"/>
+        <result column="description"       property="description"/>
+        <result column="location"          property="location"/>
+
+        <result column="exam_start_time"   property="examStartTime"/>
+        <result column="exam_end_time"     property="examEndTime"/>
+        <result column="signup_start_time" property="signupStartTime"/>
+        <result column="signup_end_time"   property="signupEndTime"/>
+        <result column="created_at"        property="createdAt"/>
+
+        <!-- 业务字段（实体里有就会映射，没有就被忽略） -->
+        <result column="phase"             property="phase"/>
+        <result column="registered"        property="registered"/>
+    </resultMap>
+
+    <!-- 公共列 -->
+    <sql id="BaseColumns">
+        e.id,
+        e.title,
+        e.description,
+        e.location,
+        e.exam_start_time,
+        e.exam_end_time,
+        e.signup_start_time,
+        e.signup_end_time,
+        e.created_at
+    </sql>
+
+    <!-- 公共 phase 计算：用 CDATA 包起来，里面可以随便用 < / > -->
+    <sql id="PhaseCase">
+        <![CDATA[
+        CASE
+            WHEN NOW() < e.signup_start_time THEN 'signup_not_started'
+            WHEN NOW() >= e.signup_start_time AND NOW() <= e.signup_end_time THEN 'signup_open'
+            WHEN NOW() > e.signup_end_time AND NOW() <= e.exam_end_time THEN 'signup_closed'
+            WHEN NOW() > e.exam_end_time THEN 'finished'
+            ELSE 'unknown'
+        END
+        ]]>
+    </sql>
+
+    <!-- 1. 普通/首页用：只算 phase，不区分用户 -->
+    <select id="findAllWithPhase" resultMap="ExamResultMap">
+        SELECT
+        <include refid="BaseColumns"/>,
+        <include refid="PhaseCase"/> AS phase,
+        0 AS registered
+        FROM exam e
+        ORDER BY e.exam_start_time DESC
+    </select>
+
+    <!-- 2. 带 userId：考试列表页用，多一个 registered 字段 -->
+    <select id="findAllWithUser" resultMap="ExamResultMap">
+        SELECT
+        <include refid="BaseColumns"/>,
+        <include refid="PhaseCase"/> AS phase,
+        CASE
+        WHEN r.user_id IS NOT NULL THEN 1
+        ELSE 0
+        END AS registered
+        FROM exam e
+        LEFT JOIN exam_registration r
+        ON e.id = r.exam_id
+        AND r.user_id = #{userId}
+        ORDER BY e.exam_start_time DESC
+    </select>
+
+    <!-- 3. 详情查询 -->
+    <select id="findById" parameterType="long" resultMap="ExamResultMap">
+        SELECT
+        <include refid="BaseColumns"/>,
+        <include refid="PhaseCase"/> AS phase,
+        0 AS registered
+        FROM exam e
+        WHERE e.id = #{id}
+    </select>
+
+    <!-- 4. 新增考试 -->
+    <insert id="insert"
+            parameterType="com.testsystem.entity.Exam"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO exam
+        (
+            title,
+            description,
+            location,
+            exam_start_time,
+            exam_end_time,
+            signup_start_time,
+            signup_end_time,
+            created_at
+        )
+        VALUES
+            (
+                #{title},
+                #{description},
+                #{location},
+                #{examStartTime},
+                #{examEndTime},
+                #{signupStartTime},
+                #{signupEndTime},
+                NOW()
+            )
+    </insert>
+
+    <!-- 5. 更新考试 -->
+    <update id="update" parameterType="com.testsystem.entity.Exam">
+        UPDATE exam
+        SET
+            title             = #{title},
+            description       = #{description},
+            location          = #{location},
+            exam_start_time   = #{examStartTime},
+            exam_end_time     = #{examEndTime},
+            signup_start_time = #{signupStartTime},
+            signup_end_time   = #{signupEndTime}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 6. 删除考试 -->
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM exam WHERE id = #{id}
+    </delete>
+
+    <!-- 7. 报名相关：统计某用户是否已报名某考试 -->
+    <select id="countRegistration" resultType="int">
+        SELECT COUNT(*)
+        FROM exam_registration
+        WHERE exam_id = #{examId}
+          AND user_id = #{userId}
+    </select>
+
+    <!-- 8. 插入报名记录 -->
+    <insert id="insertRegistration">
+        INSERT INTO exam_registration (exam_id, user_id)
+        VALUES (#{examId}, #{userId})
+    </insert>
+
+</mapper>
